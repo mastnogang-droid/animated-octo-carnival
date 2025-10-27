@@ -1,78 +1,85 @@
-<!doctype html>
+<!<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stateout — แชร์พิกัด</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stateout — แชร์พิกัดของคุณ</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- โหลดแผนที่จาก Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha512-sA+ePH0P6w4tSck2V0x7ZzFz7YYzD9vGQxRjYZkTbKz3vO7QvU0Dd3j1qpjYX0YzT5m1h2aZ7z0h2x4gZ7g=="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha512-vA3eK6Oe8cQ4tXYQKjQvX9eX7i0hWlBzL2sNwYj1HYKqS6CGEJz4hRjIVQ8W0I2Dwh/9Yl7y4NMeCztXcE+JGw=="
+    crossorigin=""
+  ></script>
+
   <style>
-    body { margin:0; font-family:sans-serif; background:#f0f8ff; }
-    header { background:#0078d7; color:white; padding:12px 18px; text-align:center; }
-    h1 { margin:0; font-size:20px; }
-    #map { height:70vh; }
-    .panel { text-align:center; padding:12px; }
-    button { background:#0078d7; color:white; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; }
-    button:hover { background:#005fa3; }
-    #status { margin:10px 0; color:#333; }
+    body {
+      margin: 0;
+      font-family: "Prompt", sans-serif;
+      background-color: #e6f3ff;
+    }
+    header {
+      background-color: #0078d7;
+      color: white;
+      text-align: center;
+      padding: 15px 10px;
+      font-size: 22px;
+      font-weight: bold;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+    #map {
+      height: 75vh;
+      width: 100%;
+    }
+    .panel {
+      text-align: center;
+      padding: 15px;
+    }
+    button {
+      background-color: #0078d7;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background-color: #005fa3;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 15px;
+      color: #333;
+    }
   </style>
 </head>
 <body>
-  <header><h1>🌍 Stateout — แชร์พิกัดของคุณ</h1></header>
+  <header>🌍 Stateout — แชร์พิกัดของคุณ</header>
+
   <div id="map"></div>
+
   <div class="panel">
-    <div id="status">กำลังดึงตำแหน่งโดยประมาณ...</div>
-    <button id="gpsBtn">แชร์ตำแหน่งแม่นยำ (GPS)</button>
+    <button id="gpsBtn">📡 แชร์พิกัดแม่นยำ (GPS)</button>
+    <div id="status">กำลังตรวจหาตำแหน่งโดยประมาณ...</div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom:19, attribution:'© OpenStreetMap contributors'
+    const map = L.map("map").setView([13.736717, 100.523186], 5); // เริ่มต้นที่ประเทศไทย
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap contributors",
     }).addTo(map);
 
-    const statusEl = document.getElementById('status');
-    const gpsBtn = document.getElementById('gpsBtn');
+    const statusEl = document.getElementById("status");
+    const gpsBtn = document.getElementById("gpsBtn");
     let marker;
 
-    function setStatus(t){ statusEl.textContent=t; }
-
-    function showMarker(lat, lon, msg){
-      if(marker) map.removeLayer(marker);
-      marker = L.marker([lat,lon]).addTo(map);
-      marker.bindPopup(msg).openPopup();
-      map.setView([lat,lon], 12);
-    }
-
-    async function loadByIP(){
-      try {
-        const res = await fetch('https://ipapi.co/json/');
-        const data = await res.json();
-        showMarker(data.latitude, data.longitude, `📍 ${data.city || 'ไม่ระบุ'}, ${data.country_name || ''}`);
-        setStatus(`ตำแหน่งโดยประมาณ: ${data.city || 'ไม่ระบุ'}`);
-      } catch(e){
-        setStatus('ไม่สามารถดึงตำแหน่งจาก IP ได้');
-      }
-    }
-
-    function loadGPS(){
-      if(!navigator.geolocation){
-        alert('เบราว์เซอร์นี้ไม่รองรับ GPS');
-        return;
-      }
-      setStatus('กำลังขออนุญาตใช้ตำแหน่ง...');
-      navigator.geolocation.getCurrentPosition(pos=>{
-        const {latitude, longitude}=pos.coords;
-        showMarker(latitude, longitude, '📍 ตำแหน่งจริงของคุณ');
-        setStatus(`ตำแหน่งแม่นยำแล้ว (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
-      },err=>{
-        setStatus('ไม่สามารถเข้าถึง GPS ได้');
-      });
-    }
-
-    gpsBtn.addEventListener('click', loadGPS);
-    loadByIP();
-  </script>
-</body>
-</html>
+    function update
